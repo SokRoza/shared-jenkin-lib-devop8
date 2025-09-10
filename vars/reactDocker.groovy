@@ -1,15 +1,13 @@
 def call(Map config = [:]) {
-    stage('Inject Dockerfile') {
-        steps {
-            script {
-                // Set variables here
-                def IMAGE_NAME = config.imageName ?: "react-app"
-                def REGISTRY   = config.registry ?: "dockerhub_username"
-                def PORT       = config.port ?: 80
+    // Set defaults
+    def IMAGE_NAME = config.imageName ?: "react-app"
+    def REGISTRY   = config.registry ?: "dockerhub_username"
+    def PORT       = config.port ?: 80
 
-                if (!fileExists('Dockerfile')) {
-                    echo "Dockerfile not found. Generating..."
-                    writeFile file: 'Dockerfile', text: """
+    // Inject Dockerfile
+    if (!fileExists('Dockerfile')) {
+        echo "Dockerfile not found. Generating..."
+        writeFile file: 'Dockerfile', text: """
 FROM node:alpine AS builder
 WORKDIR /app
 COPY package*.json ./
@@ -22,13 +20,14 @@ COPY --from=builder /app/build /usr/share/nginx/html
 EXPOSE ${PORT}
 CMD ["nginx", "-g", "daemon off;"]
 """
-                } else {
-                    echo "Dockerfile exists. Using existing."
-                }
+    } else {
+        echo "Dockerfile exists. Using existing."
+    }
 
-                if (!fileExists('docker-compose.yml')) {
-                    echo "docker-compose.yml not found. Generating..."
-                    writeFile file: 'docker-compose.yml', text: """
+    // Inject docker-compose.yml
+    if (!fileExists('docker-compose.yml')) {
+        echo "docker-compose.yml not found. Generating..."
+        writeFile file: 'docker-compose.yml', text: """
 version: '3.9'
 services:
   reactjs-srv:
@@ -37,10 +36,7 @@ services:
     ports:
       - "3000:${PORT}"
 """
-                } else {
-                    echo "docker-compose.yml exists. Using existing."
-                }
-            }
-        }
+    } else {
+        echo "docker-compose.yml exists. Using existing."
     }
 }
